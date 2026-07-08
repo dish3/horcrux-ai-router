@@ -1,0 +1,4 @@
+# docker-compose.yml placeholder for future container orchestration
+# Will be configured in a later stage.
+version: '3.8'
+services: {}
