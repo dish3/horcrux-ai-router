@@ -1,0 +1,34 @@
+[
+  {
+    "task_id": "task_sentiment_001",
+    "prompt": "Classify the sentiment of the following movie review: This movie was fantastic!"
+  },
+  {
+    "task_id": "task_ner_002",
+    "prompt": "Extract all named entities and their types from the following text: Barack Obama visited London in 2012."
+  },
+  {
+    "task_id": "task_summary_003",
+    "prompt": "Summarize this article in one sentence: The economy grew by 3% in the last quarter as exports increased."
+  },
+  {
+    "task_id": "task_debug_004",
+    "prompt": "Fix this function to resolve the division bug: def divide(a, b): return a / b"
+  },
+  {
+    "task_id": "task_codegen_005",
+    "prompt": "Write a python function to compute the Fibonacci sequence up to N terms."
+  },
+  {
+    "task_id": "task_logic_006",
+    "prompt": "Three people have different pets: a dog, a cat, and a bird. If John does not own the dog, and each owns a different pet, who owns the cat?"
+  },
+  {
+    "task_id": "task_math_007",
+    "prompt": "A store has 120 apples. If they sell 25%, how many apples are left?"
+  },
+  {
+    "task_id": "task_factual_008",
+    "prompt": "What is the speed of light in vacuum?"
+  }
+]
