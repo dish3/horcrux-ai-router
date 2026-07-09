@@ -57,8 +57,15 @@ class LocalDispatcher:
                 )
                 
                 if can_handle:
+                    import time
                     logger.info(f"Delegating task {task.task_id} to handler: {handler.__class__.__name__}")
-                    return handler.execute(task)
+                    start_time = time.perf_counter()
+                    res = handler.execute(task)
+                    end_time = time.perf_counter()
+                    
+                    res.handler_name = handler.__class__.__name__
+                    res.processing_time_ms = (end_time - start_time) * 1000.0
+                    return res
             except Exception as e:
                 logger.error(
                     f"Error checking/executing handler {handler.__class__.__name__} "
@@ -69,5 +76,22 @@ class LocalDispatcher:
         logger.warning(f"No local handler matched task {task.task_id}. Returning default placeholder.")
         return LocalResult(
             answer="This task processor is not implemented yet.",
-            confidence=0.0
+            confidence=0.0,
+            handled=False
         )
+
+    def register_default_handlers(self) -> None:
+        """
+        Explicitly instantiates and registers standard local tool handlers in a centralized place.
+        """
+        from backend.app.local_tools.handlers.sentiment import SentimentHandler
+        from backend.app.local_tools.handlers.ner import NERHandler
+        from backend.app.local_tools.handlers.summarization import SummarizationHandler
+        from backend.app.local_tools.handlers.math import MathHandler
+        from backend.app.local_tools.handlers.factual import FactualHandler
+
+        self.register(SentimentHandler())
+        self.register(NERHandler())
+        self.register(SummarizationHandler())
+        self.register(MathHandler())
+        self.register(FactualHandler())

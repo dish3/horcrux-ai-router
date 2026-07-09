@@ -43,10 +43,14 @@ class SentimentHandler(LocalHandler):
         
         if pos_count > neg_count:
             result = "Positive"
+            confidence = 1.0
         elif neg_count > pos_count:
             result = "Negative"
+            confidence = 1.0
         else:
             result = "Neutral"
+            # Lower confidence if we fallback to Neutral due to lack of matches
+            confidence = 1.0 if (pos_count > 0 or neg_count > 0) else 0.55
 
-        logger.info(f"SentimentHandler finished. Result: {result}")
-        return LocalResult(answer=result, confidence=1.0)
+        logger.info(f"SentimentHandler finished. Result: {result} (Confidence: {confidence:.2f})")
+        return LocalResult(answer=result, confidence=confidence)

@@ -14,6 +14,9 @@ class LocalResult:
     """
     answer: str
     confidence: float = 1.0
+    handled: bool = True
+    handler_name: str = ""
+    processing_time_ms: float = 0.0
 
 class LocalHandler(ABC):
     """

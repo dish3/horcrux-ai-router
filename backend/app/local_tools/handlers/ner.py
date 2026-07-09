@@ -51,10 +51,16 @@ class NERHandler(LocalHandler):
 
         if nlp is not None:
             answer = self._execute_spacy(text_to_analyze)
+            handler_name = "NERHandler_spaCy"
+            has_entities = "Person: None, Organization: None, Location: None, Date: None" not in answer
+            confidence = 0.95 if has_entities else 0.60
         else:
             answer = self._execute_regex_fallback(text_to_analyze)
+            handler_name = "NERHandler_Regex"
+            has_entities = "Person: None, Organization: None, Location: None, Date: None" not in answer
+            confidence = 0.90 if has_entities else 0.55
             
-        return LocalResult(answer=answer, confidence=1.0)
+        return LocalResult(answer=answer, confidence=confidence, handler_name=handler_name)
 
     def _execute_spacy(self, text: str) -> str:
         """

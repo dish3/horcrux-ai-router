@@ -25,3 +25,6 @@ ALLOWED_MODELS: List[str] = [m.strip() for m in ALLOWED_MODELS_STR.split(",") if
 # Server Configuration
 PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Horcrux")
 DEBUG: bool = os.getenv("DEBUG", "False").lower() in ("true", "1", "t", "y", "yes")
+
+# Confidence-based Routing Configuration
+DEFAULT_CONFIDENCE_THRESHOLD: float = float(os.getenv("DEFAULT_CONFIDENCE_THRESHOLD", "0.80"))
