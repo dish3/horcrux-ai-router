@@ -7,6 +7,10 @@ and configures defaults.
 
 import os
 from typing import List
+from dotenv import load_dotenv
+
+# Load environment variables from .env file for local development
+load_dotenv()
 
 # Fireworks API Configuration
 FIREWORKS_API_KEY: str = os.getenv("FIREWORKS_API_KEY", "")
@@ -14,10 +18,7 @@ FIREWORKS_BASE_URL: str = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks
 
 # Allowed Models configuration
 # Reads comma-separated models from environment or uses defaults
-_default_models = (
-    "accounts/fireworks/models/llama-v3p1-8b-instruct,"
-    "accounts/fireworks/models/llama-v3p1-70b-instruct"
-)
+_default_models = "accounts/fireworks/models/minimax-m3"
 ALLOWED_MODELS_STR: str = os.getenv("ALLOWED_MODELS", _default_models)
 ALLOWED_MODELS: List[str] = [m.strip() for m in ALLOWED_MODELS_STR.split(",") if m.strip()]
 
