@@ -1,46 +1,52 @@
 """
-Lightweight rule-based sentiment classification utility.
+Rule-based sentiment analysis handler.
 """
 
-from typing import Dict, Any
+from typing import Set
+from backend.app.models.task import Task
+from backend.app.local_tools.interfaces import LocalHandler, LocalResult
+from backend.app.utils.logger import logger
 
-def handle_sentiment(prompt: str) -> str:
+class SentimentHandler(LocalHandler):
     """
-    Classifies the sentiment of the input prompt using a simple word lexicon.
-
-    Args:
-        prompt: The input task prompt.
-
-    Returns:
-        A string containing the sentiment label and a one-line keyword justification.
+    Classifies task sentiment as Positive, Negative, or Neutral using a keyword lexicon.
     """
-    positive_words = {
-        "great", "love", "excellent", "fantastic", "amazing", "wonderful", 
-        "good", "beautiful", "happy", "awesome", "perfect", "enjoy", "pleasant", "delight"
-    }
-    negative_words = {
-        "bad", "terrible", "hate", "awful", "horrible", "poor", "worse", 
-        "worst", "dislike", "angry", "sad", "failure", "bug", "broken", "annoy"
-    }
-    
-    # Tokenize and normalize words
-    words = [w.strip(".,!?\"'()").lower() for w in prompt.split()]
-    
-    # Identify keyword hits
-    matched_pos = [w for w in words if w in positive_words]
-    matched_neg = [w for w in words if w in negative_words]
-    
-    pos_count = len(matched_pos)
-    neg_count = len(matched_neg)
-    
-    if pos_count > neg_count:
-        sentiment = "Positive"
-        justification = f"Triggered by positive keywords: {list(set(matched_pos))}"
-    elif neg_count > pos_count:
-        sentiment = "Negative"
-        justification = f"Triggered by negative keywords: {list(set(matched_neg))}"
-    else:
-        sentiment = "Neutral"
-        justification = "No dominant positive or negative keywords matched."
+
+    def __init__(self) -> None:
+        self.positive_words: Set[str] = {
+            "great", "love", "excellent", "fantastic", "amazing", "wonderful", 
+            "good", "beautiful", "happy", "awesome", "perfect", "enjoy", "pleasant", "delight"
+        }
+        self.negative_words: Set[str] = {
+            "bad", "terrible", "hate", "awful", "horrible", "poor", "worse", 
+            "worst", "dislike", "angry", "sad", "failure", "bug", "broken", "annoy"
+        }
+
+    def can_handle(self, task: Task, category: str) -> bool:
+        """
+        SentimentHandler handles tasks classified as 'sentiment'.
+        """
+        return category == "sentiment"
+
+    def execute(self, task: Task) -> LocalResult:
+        """
+        Classifies the sentiment. Returns ONLY 'Positive', 'Negative', or 'Neutral' in a LocalResult.
+        """
+        prompt = task.prompt.lower()
         
-    return f"Sentiment: {sentiment}. Justification: {justification}"
+        # Tokenize and normalize words
+        words = [w.strip(".,!?\"'()").lower() for w in prompt.split()]
+        
+        # Count keywords
+        pos_count = sum(1 for w in words if w in self.positive_words)
+        neg_count = sum(1 for w in words if w in self.negative_words)
+        
+        if pos_count > neg_count:
+            result = "Positive"
+        elif neg_count > pos_count:
+            result = "Negative"
+        else:
+            result = "Neutral"
+
+        logger.info(f"SentimentHandler finished. Result: {result}")
+        return LocalResult(answer=result, confidence=1.0)

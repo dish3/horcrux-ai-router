@@ -9,9 +9,16 @@ from backend.app.classifiers.heuristic_difficulty import HeuristicDifficultyEsti
 from backend.app.router.registry import get_strategy
 from backend.app.fireworks.fireworks_client import call_fireworks
 from backend.app.utils.logger import logger
-from backend.app.local_tools.handlers.sentiment import handle_sentiment
-from backend.app.local_tools.handlers.ner import handle_ner
-from backend.app.local_tools.handlers.summarization import handle_summarization
+from backend.app.local_tools.dispatcher import LocalDispatcher
+from backend.app.local_tools.handlers.sentiment import SentimentHandler
+from backend.app.local_tools.handlers.ner import NERHandler
+from backend.app.local_tools.handlers.summarization import SummarizationHandler
+
+# Explicitly instantiate and register local execution tool handlers
+_local_dispatcher = LocalDispatcher()
+_local_dispatcher.register(SentimentHandler())
+_local_dispatcher.register(NERHandler())
+_local_dispatcher.register(SummarizationHandler())
 
 # Thread-safe persistent instances of classifier and difficulty estimator
 _classifier = HeuristicClassifier()
@@ -56,16 +63,10 @@ def process_task(task: Task) -> Result:
         logger.info(f"Fireworks Execution Complete: Task={task.task_id} | Tokens={tokens_used} | Model={model_used}")
         print(f"[FIREWORKS METRICS] Task ID: {task.task_id} | Model: {model_used} | Tokens Used: {tokens_used}")
     else:
-        logger.info(f"Executing task {task.task_id} via Local Processor ({category})...")
-        if category == "sentiment":
-            answer = handle_sentiment(task.prompt)
-        elif category == "ner":
-            answer = handle_ner(task.prompt)
-        elif category == "summarization":
-            answer = handle_summarization(task.prompt)
-        else:
-            answer = "This task processor is not implemented yet. (Unrouted local task category)"
-        print(f"[LOCAL EXECUTION] Task ID: {task.task_id} | Category: {category} | Answer: {answer}")
+        logger.info(f"Executing task {task.task_id} via Local Dispatcher...")
+        local_res = _local_dispatcher.execute(task, category)
+        answer = local_res.answer
+        print(f"[LOCAL EXECUTION] Task ID: {task.task_id} | Answer: {answer}")
 
     return Result(
         task_id=task.task_id,
