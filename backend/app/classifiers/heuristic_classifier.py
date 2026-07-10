@@ -25,7 +25,7 @@ class HeuristicClassifier(BaseClassifier):
         prompt = task.prompt.lower()
 
         # 1. Sentiment
-        if any(kw in prompt for kw in ["sentiment", "classify the", "positive or negative"]):
+        if any(kw in prompt for kw in ["sentiment", "classify", "positive or negative", "movie review", "review of", "opinion"]):
             logger.info(f"Classified task {task.task_id} as 'sentiment'")
             return "sentiment"
 
@@ -35,7 +35,7 @@ class HeuristicClassifier(BaseClassifier):
             return "ner"
 
         # 3. Summarization
-        if any(kw in prompt for kw in ["summarize", "summarise", "one sentence"]):
+        if any(kw in prompt for kw in ["summarize", "summarise", "one sentence", "summary"]):
             logger.info(f"Classified task {task.task_id} as 'summarization'")
             return "summarization"
 
@@ -55,13 +55,15 @@ class HeuristicClassifier(BaseClassifier):
             return "logic"
 
         # 7. Mathematical Reasoning
-        # Contains "%", "how many", or digits + math words
+        # Contains "%", "how many", arithmetic operators + digits, or digits + math words
         has_digit = bool(re.search(r'\d+', prompt))
+        has_math_operator = bool(re.search(r'[\+\-\*/\(\)=]', prompt))
         math_words = [
             "%", "how many", "solve", "calculate", "sum", "product", "math",
-            "equation", "add", "subtract", "multiply", "divide", "ratio", "fraction"
+            "equation", "add", "subtract", "multiply", "divide", "ratio", "fraction",
+            "average", "mean", "median", "mode", "percentage"
         ]
-        if "%" in prompt or "how many" in prompt or (has_digit and any(w in prompt for w in math_words)):
+        if "%" in prompt or "how many" in prompt or (has_digit and (has_math_operator or any(w in prompt for w in math_words))):
             logger.info(f"Classified task {task.task_id} as 'math_reasoning'")
             return "math_reasoning"
 

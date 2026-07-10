@@ -1,16 +1,17 @@
 # Horcrux — Cost-Aware Hybrid AI Router
 
-Think before you spend tokens.
+**Think before you spend tokens.**
 
-Horcrux is an intelligent routing agent built for the AMD Developer Hackathon: ACT II (Track 1 — General-Purpose AI Agent). Instead of sending every prompt to a hosted LLM, Horcrux classifies each request, decides whether it can be answered locally with zero cloud cost, and only escalates to Fireworks AI when local execution isn't confident enough to trust.
+Horcrux is an intelligent routing agent built for the **AMD Developer Hackathon: ACT II (Track 1 — General-Purpose AI Agent)**. Instead of sending every prompt to a hosted LLM, Horcrux classifies each request, decides whether it can be answered locally at zero cloud cost, and only escalates to Fireworks AI when local execution isn't confident enough to trust.
 
-The result: full task coverage across all 8 required categories, at a fraction of the token cost of a naive "always call the model" approach.
+Supports all eight required task categories through a hybrid combination of local handlers and Fireworks AI — at a fraction of the token cost of a naive "always call the model" approach.
 
 ---
 
 ## Why this approach
 
 Track 1 is scored in two stages:
+
 1. **Accuracy gate (80%)** — fail this and nothing else matters.
 2. **Token efficiency ranking** — among teams that pass the gate, fewer Fireworks tokens used = higher rank.
 
@@ -18,9 +19,22 @@ Local model/tool answers count fully toward accuracy and cost zero Fireworks tok
 
 ---
 
+## Key Features
+
+- Hybrid AI routing across all 8 required task categories
+- Automatic task classification (no manual category selection required)
+- Confidence-based local execution with automatic Fireworks fallback
+- Zero-token local inference for sentiment, NER, summarization, math, and factual queries
+- Live metrics dashboard (local vs. Fireworks split, token savings, confidence, latency)
+- Interactive routing visualizer showing the real decision path per prompt
+- Docker packaging — publicly pullable, no manual setup required
+- REST API for programmatic access
+
+---
+
 ## Architecture
 
-```text
+```
                     Prompt
                        │
                        ▼
@@ -43,7 +57,7 @@ Local model/tool answers count fully toward accuracy and cost zero Fireworks tok
        Confidence Score             │
               │                     │
        ┌──────┴───────┐             │
-       │ ≥ 0.80?       │            │
+       │  `>= 0.80?`   │            │
        └──────┬────────┘            │
          Yes  │   No ────► Escalate ┘
               ▼
@@ -58,15 +72,15 @@ Local model/tool answers count fully toward accuracy and cost zero Fireworks tok
 ### Routing strategy by category
 
 | Category | Local Handler | Fallback |
-| :--- | :--- | :--- |
-| **Sentiment** | Keyword/lexicon classifier | Fireworks (low confidence) |
-| **NER** | spaCy / regex extraction | Fireworks (no entities found) |
-| **Summarization** | Local extractive summarizer | Fireworks (short/low-context input) |
-| **Math Reasoning** | Regex + SymPy/Python evaluation | Fireworks (unparseable expression) |
-| **Factual Knowledge** | Local structured knowledge base | Fireworks (fact not found) |
-| **Code Debugging** | — | Fireworks (Direct API) |
-| **Code Generation** | — | Fireworks (Direct API) |
-| **Logic Puzzles** | — | Fireworks (Direct API) |
+|---|---|---|
+| Sentiment | Keyword/lexicon classifier | Fireworks (low confidence) |
+| NER | spaCy / regex extraction | Fireworks (no entities found) |
+| Summarization | Local extractive summarizer | Fireworks (short/low-context input) |
+| Math Reasoning | Regex + Python expression evaluation | Fireworks (unparseable expression) |
+| Factual Knowledge | Local structured knowledge base | Fireworks (fact not found) |
+| Code Debugging | — | Fireworks (direct API) |
+| Code Generation | — | Fireworks (direct API) |
+| Logic Puzzles | — | Fireworks (direct API) |
 
 Each local handler returns a `handled` flag and a `confidence` score. If `handled=False` or `confidence < 0.80`, the router automatically escalates to Fireworks and logs the reason (`not_handled`, `low_confidence`, or `parse_failure`).
 
@@ -74,36 +88,36 @@ Each local handler returns a `handled` flag and a `confidence` score. If `handle
 
 ## Tech Stack
 
-### Backend
-* Python 3.11, FastAPI
-* Custom local handlers (sentiment, NER, summarization, math, factual)
-* Fireworks AI client for escalated tasks (models read from `ALLOWED_MODELS` env var, not hardcoded)
-* pytest test suite
+**Backend**
+- Python 3.11, FastAPI
+- Custom local handlers (sentiment, NER, summarization, math, factual)
+- Fireworks AI client for escalated tasks (models read from `ALLOWED_MODELS` env var, not hardcoded)
+- pytest test suite
 
-### Frontend
-* React 18 + TypeScript + Vite
-* Tailwind CSS
-* Lucide icons
-* Live dashboard, routing visualizer, and metrics views backed by real API responses
+**Frontend**
+- React 18 + TypeScript + Vite
+- Tailwind CSS
+- Lucide icons
+- Live dashboard, routing visualizer, and metrics views backed by real API responses
 
-### Packaging
-* Docker (`python:3.11-slim` base image)
-* `linux/amd64` manifest, publicly pullable from GHCR
-* No secrets baked into the image — `FIREWORKS_API_KEY` is injected at runtime
+**Packaging**
+- Docker (`python:3.11-slim` base image)
+- `linux/amd64` manifest, publicly pullable from GHCR
+- No secrets baked into the image — `FIREWORKS_API_KEY` is injected at runtime
 
 ---
 
 ## Project Structure
 
-```text
+```
 horcrux/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py              # FastAPI app setup & CORS config
-│   │   ├── config.py            # Global project config
-│   │   ├── pipeline.py          # CLI Entry point: reads tasks.json, writes results.json
+│   │   ├── main.py                  # FastAPI app setup & CORS config
+│   │   ├── config.py                # Global project config
+│   │   ├── pipeline.py              # CLI entry point: reads tasks.json, writes results.json
 │   │   ├── api/
-│   │   │   └── router_endpoint.py # FastAPI /route and /metrics endpoints
+│   │   │   └── router_endpoint.py   # FastAPI /route and /metrics endpoints
 │   │   ├── classifiers/
 │   │   │   ├── heuristic_classifier.py
 │   │   │   └── heuristic_difficulty.py
@@ -133,14 +147,14 @@ horcrux/
 │       └── test_confidence_routing.py
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx              # Overview, Dashboard, Routing Visualizer, Metrics
+│   │   ├── App.tsx                  # Overview, Dashboard, Routing Visualizer, Metrics
 │   │   ├── main.tsx
 │   │   └── index.css
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── tailwind.config.js
 ├── scripts/
-│   └── verify_pipeline.py       # Local end-to-end pipeline check
+│   └── verify_pipeline.py           # Local end-to-end pipeline check
 ├── sample_input/
 ├── sample_output/
 ├── Dockerfile
@@ -154,18 +168,19 @@ horcrux/
 
 ## API Endpoints
 
-The Horcrux FastAPI server exposes two key endpoints for integration and frontends:
-
 ### 1. Route Prompt
-* **Endpoint**: `POST /api/route`
-* **Content-Type**: `application/json`
-* **Request Payload**:
+
+**Endpoint:** `POST /api/route`
+**Content-Type:** `application/json`
+
+**Request:**
 ```json
 {
   "prompt": "What is 15% of 200?"
 }
 ```
-* **Response Payload**:
+
+**Example response:**
 ```json
 {
   "task_id": "task_api_6e8a4d",
@@ -175,7 +190,7 @@ The Horcrux FastAPI server exposes two key endpoints for integration and fronten
   "handler": "MathHandler",
   "confidence": 1.0,
   "latency_ms": 1.25,
-  "fireworks_model": "None",
+  "fireworks_model": null,
   "tokens_used": 0,
   "tokens_saved": 250,
   "answer": "30",
@@ -185,8 +200,10 @@ The Horcrux FastAPI server exposes two key endpoints for integration and fronten
 ```
 
 ### 2. System Metrics
-* **Endpoint**: `GET /api/metrics`
-* **Response Payload**:
+
+**Endpoint:** `GET /api/metrics`
+
+**Example response:**
 ```json
 {
   "total_tasks": 6,
@@ -201,42 +218,63 @@ The Horcrux FastAPI server exposes two key endpoints for integration and fronten
 
 ---
 
+## Sample Routing Results
+
+| Prompt | Category | Route |
+|---|---|---|
+| What is 15% of 200? | Math Reasoning | Local |
+| Classify the sentiment of this review | Sentiment | Local |
+| Extract named entities from this text | NER | Local |
+| What is the speed of light? | Factual Knowledge | Local |
+| Fix this Python bug | Code Debugging | Fireworks |
+| Write a Fibonacci function | Code Generation | Fireworks |
+| Solve this logic puzzle | Logic | Fireworks |
+
+---
+
 ## Running Locally
 
 ### Backend Setup
-1. Navigate to the backend directory and install Python dependencies:
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   ```
-2. Configure environmental variables inside a `.env` file at the root directory:
-   ```env
-   FIREWORKS_API_KEY="your_fireworks_api_key_here"
-   ALLOWED_MODELS="accounts/fireworks/models/minimax-m3"
-   ```
-3. To execute the CLI pipeline against standard input:
-   ```bash
-   python -m app.pipeline --input ../sample_input/tasks.json --output ../sample_output/results.json
-   ```
-4. To spin up the FastAPI service endpoint:
-   ```bash
-   uvicorn backend.app.main:app --reload --port 8000
-   ```
+
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+Configure environment variables inside a `.env` file at the project root:
+
+```
+FIREWORKS_API_KEY="your_fireworks_api_key_here"
+FIREWORKS_BASE_URL="https://api.fireworks.ai/inference/v1"
+ALLOWED_MODELS="accounts/fireworks/models/minimax-m3"
+```
+
+Run the CLI pipeline against a task file:
+
+```bash
+python -m backend.app.pipeline --input sample_input/tasks.json --output sample_output/results.json
+```
+
+Start the FastAPI service:
+
+```bash
+uvicorn backend.app.main:app --reload --port 8000
+```
 
 ### Frontend Setup
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   npm install
-   ```
-2. Launch the Vite development server:
-   ```bash
-   npm run dev
-   ```
-3. Open your browser to `http://localhost:3000`. Use the simulator input on the Overview page to execute prompts, check the live trace flowchart on the Routing Visualizer page, and view graphs on the Metrics page.
 
-### Running Tests
-Execute unit tests covering local handler functions, classifier categorization, and confidence routing strategies:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. Use the simulator on the Overview page to run prompts, watch the live routing path on the Routing Visualizer page, and view live stats on the Metrics page.
+
+---
+
+## Running Tests
+
 ```bash
 pytest backend/tests
 ```
@@ -245,49 +283,61 @@ pytest backend/tests
 
 ## Running with Docker
 
-### Build the Image
+### Pull the published image
+
+```bash
+docker pull ghcr.io/dish3/horcrux-agent:latest
+```
+
+### Or build locally
+
 ```bash
 docker build -t horcrux-agent .
 ```
 
-### Run the Container
-Inject your Fireworks API key and mount local data paths at runtime:
+### Run the container
+
 ```bash
 docker run --rm \
-  -e FIREWORKS_API_KEY="your_key_here" \
   -v "$(pwd)/sample_input:/input" \
   -v "$(pwd)/sample_output:/output" \
+  -e FIREWORKS_API_KEY="your_key_here" \
+  -e FIREWORKS_BASE_URL="https://api.fireworks.ai/inference/v1" \
+  -e ALLOWED_MODELS="accounts/fireworks/models/minimax-m3" \
   horcrux-agent
 ```
-Predictions and execution statistics will write directly to `sample_output/results.json`.
+
+Predictions and execution logs are written to `sample_output/results.json`.
 
 ---
 
-## Screenshots & Visuals
+## Screenshots
 
-Below are placeholder references mapping the polished dark-theme UI views:
+> Replace these placeholders with actual screenshots before final submission.
 
-### 1. Dashboard Overview
-![Overview Workspace](https://raw.githubusercontent.com/dish3/horcrux-ai-router/main/docs/assets/overview.png)
-*(Presents total saved tokens count, local dispatcher hit rates, average execution latencies, and interactive simulation run form.)*
+**Overview & Simulator**
+_Total savings, local hit rate, average latency, and the interactive prompt simulator._
 
-### 2. Live Decision Path Trace
-![Trace Visualizer](https://raw.githubusercontent.com/dish3/horcrux-ai-router/main/docs/assets/visualizer.png)
-*(Dynamic workflow trace highlighting active prompt, category classification outputs, local confidence scores, and API fallbacks.)*
+**Routing Visualizer**
+_Live trace of the classifier → handler → confidence → decision path for the last executed prompt._
 
-### 3. Analytics & Distribution
-![Metrics Stats](https://raw.githubusercontent.com/dish3/horcrux-ai-router/main/docs/assets/metrics.png)
-*(Distribution graphs mapping average local handler execution confidence, escalation counts, and tokens saved per task category.)*
+**Metrics**
+_Confidence distribution, local vs. Fireworks split, and token savings over time._
 
 ---
 
 ## Contribution Guidelines
 
-1. **Format & Linting**: Use standard Python formatting guidelines for backend files and ESLint rules for TypeScript code.
-2. **Writing Tests**: Ensure any added dispatcher logic or custom handlers have accompanying unit tests in `backend/tests/` verifying accuracy and confidence scores.
-3. **Submitting PRs**: Fork the repository, create a descriptive feature branch (e.g. `feat/caching-layer`), and issue a Pull Request to the main branch. Ensure all pytest unit checks pass before merging.
+- **Formatting:** Standard Python formatting for backend files; ESLint rules for TypeScript/React code.
+- **Testing:** Any new dispatcher logic or handler must include accompanying unit tests in `backend/tests/`.
+- **Pull requests:** Fork the repository, create a descriptive feature branch (e.g. `feat/new-handler`), and open a PR against `main`. Ensure all pytest checks pass before merging.
 
 ---
 
-**Built For the AMD Developer Hackathon: ACT II — Track 1 (General-Purpose AI Agent)**
-*Submitted via lablab.ai*
+## License
+
+MIT License
+
+---
+
+Built for the **AMD Developer Hackathon: ACT II — Track 1 (General-Purpose AI Agent)**, submitted via [lablab.ai](https://lablab.ai).

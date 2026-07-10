@@ -34,6 +34,8 @@ interface TaskResult {
   escalation_reason?: 'low_confidence' | 'not_handled' | 'parse_failure' | 'none';
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'routing' | 'metrics'>('home');
   const [tasks, setTasks] = useState<TaskResult[]>([]);
@@ -45,6 +47,7 @@ export default function App() {
   // Custom prompt input states
   const [customPrompt, setCustomPrompt] = useState('');
   const [customCategory, setCustomCategory] = useState('sentiment');
+  const [overrideCategory, setOverrideCategory] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
 
   // Modern toast/banner notification state
@@ -72,7 +75,7 @@ export default function App() {
   });
 
   const fetchMetrics = () => {
-    fetch('http://localhost:8000/api/metrics')
+    fetch(`${API_BASE_URL}/api/metrics`)
       .then(res => {
         if (!res.ok) throw new Error("Backend offline");
         return res.json();
@@ -96,14 +99,14 @@ export default function App() {
 
     setIsSimulating(true);
 
-    fetch('http://localhost:8000/api/route', {
+    fetch(`${API_BASE_URL}/api/route`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         prompt: customPrompt,
-        category: customCategory,
+        ...(overrideCategory ? { category: customCategory } : {})
       }),
     })
       .then(response => {
@@ -405,11 +408,25 @@ export default function App() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs text-gray-400 font-semibold block">Category</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs text-gray-400 font-semibold block">Category</label>
+                      <label className="flex items-center gap-1 cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={overrideCategory}
+                          onChange={(e) => setOverrideCategory(e.target.checked)}
+                          className="w-3 h-3 accent-blue-500 rounded cursor-pointer"
+                        />
+                        <span className="text-[10px] text-gray-500 hover:text-gray-300">Override</span>
+                      </label>
+                    </div>
                     <select
                       value={customCategory}
                       onChange={(e) => setCustomCategory(e.target.value)}
-                      className="w-full bg-[#0b0f19] border border-[#1e273d] px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 text-sm text-gray-200 transition-colors"
+                      disabled={!overrideCategory}
+                      className={`w-full bg-[#0b0f19] border border-[#1e273d] px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 text-sm text-gray-200 transition-colors ${
+                        !overrideCategory ? 'opacity-40 cursor-not-allowed' : ''
+                      }`}
                     >
                       <option value="sentiment">Sentiment</option>
                       <option value="ner">NER</option>
