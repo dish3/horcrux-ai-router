@@ -152,3 +152,4 @@ sample_output/*
 .env
 .env.*
 !.env.example
+frontend/node_modules/
