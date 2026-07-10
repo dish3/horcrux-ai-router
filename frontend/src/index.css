@@ -26,3 +26,43 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #3b82f6;
 }
+
+/* Custom keyframes & styling for premium dashboard animations */
+@keyframes pulseGlowBlue {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(59, 130, 246, 0.6);
+  }
+}
+
+@keyframes pulseGlowEmerald {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(16, 185, 129, 0.6);
+  }
+}
+
+@keyframes pulseGlowAmber {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(245, 158, 11, 0.6);
+  }
+}
+
+.pulse-glow-blue {
+  animation: pulseGlowBlue 2.5s infinite ease-in-out;
+}
+
+.pulse-glow-emerald {
+  animation: pulseGlowEmerald 2.5s infinite ease-in-out;
+}
+
+.pulse-glow-amber {
+  animation: pulseGlowAmber 2.5s infinite ease-in-out;
+}

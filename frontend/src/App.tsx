@@ -34,160 +34,41 @@ interface TaskResult {
   escalation_reason?: 'low_confidence' | 'not_handled' | 'parse_failure' | 'none';
 }
 
-// Sample mock data simulating backend outputs
-const INITIAL_TASKS: TaskResult[] = [
-  {
-    task_id: "task_sentiment_001",
-    prompt: "Classify the sentiment of the following movie review: This movie was fantastic!",
-    category: "sentiment",
-    route: "local",
-    handler_name: "SentimentHandler",
-    confidence: 1.0,
-    processing_time_ms: 1.2,
-    model_used: "None (Local Lexicon)",
-    tokens_saved: 150,
-    answer: "Positive",
-    escalated: false
-  },
-  {
-    task_id: "task_ner_002",
-    prompt: "Extract all named entities and their types from the following text: Barack Obama visited London in 2012.",
-    category: "ner",
-    route: "local",
-    handler_name: "NERHandler_Regex",
-    confidence: 0.90,
-    processing_time_ms: 2.5,
-    model_used: "None (Local Regex)",
-    tokens_saved: 150,
-    answer: "Person: Barack Obama, Organization: None, Location: London, Date: 2012",
-    escalated: false
-  },
-  {
-    task_id: "task_summary_003",
-    prompt: "Summarize this article in one sentence: The economy grew by 3% in the last quarter as exports increased.",
-    category: "summarization",
-    route: "local",
-    handler_name: "SummarizationHandler",
-    confidence: 0.90,
-    processing_time_ms: 3.1,
-    model_used: "None (Local Summarizer)",
-    tokens_saved: 150,
-    answer: "The economy grew by 3% in the last quarter as exports increased.",
-    escalated: false
-  },
-  {
-    task_id: "task_math_007",
-    prompt: "A store has 120 apples. If they sell 25%, how many apples are left?",
-    category: "math_reasoning",
-    route: "local",
-    handler_name: "MathHandler",
-    confidence: 1.0,
-    processing_time_ms: 0.8,
-    model_used: "None (Local Math Evaluator)",
-    tokens_saved: 250,
-    answer: "90",
-    escalated: false
-  },
-  {
-    task_id: "task_factual_008",
-    prompt: "What is the speed of light in vacuum?",
-    category: "factual_knowledge",
-    route: "local",
-    handler_name: "FactualHandler",
-    confidence: 1.0,
-    processing_time_ms: 0.4,
-    model_used: "None (Local Knowledge Dict)",
-    tokens_saved: 200,
-    answer: "299,792,458 meters per second",
-    escalated: false
-  },
-  {
-    task_id: "task_debug_004",
-    prompt: "Fix this function to resolve the division bug: def divide(a, b): return a / b",
-    category: "code_debugging",
-    route: "fireworks",
-    handler_name: "None (Direct Route)",
-    confidence: 0.0,
-    processing_time_ms: 450.0,
-    model_used: "accounts/fireworks/models/minimax-m3",
-    tokens_saved: 0,
-    answer: "def divide(a, b):\n    if b == 0:\n        return 0\n    return a / b\n# Added check to return 0 on zero division.",
-    escalated: false
-  },
-  {
-    task_id: "task_codegen_005",
-    prompt: "Write a python function to compute the Fibonacci sequence up to N terms.",
-    category: "code_generation",
-    route: "fireworks",
-    handler_name: "None (Direct Route)",
-    confidence: 0.0,
-    processing_time_ms: 580.0,
-    model_used: "accounts/fireworks/models/minimax-m3",
-    tokens_saved: 0,
-    answer: "def fibonacci(n):\n    seq = [0, 1]\n    while len(seq) < n:\n        seq.append(seq[-1] + seq[-2])\n    return seq[:n]",
-    escalated: false
-  },
-  {
-    task_id: "task_logic_006",
-    prompt: "Three people have different pets: a dog, a cat, and a bird. If John does not own the dog, and each owns a different pet, who owns the cat?",
-    category: "logic",
-    route: "fireworks",
-    handler_name: "None (Direct Route)",
-    confidence: 0.0,
-    processing_time_ms: 720.0,
-    model_used: "accounts/fireworks/models/minimax-m3",
-    tokens_saved: 0,
-    answer: "John owns the cat or bird. John does not own the dog, leaving him with the cat or bird.",
-    escalated: false
-  },
-  {
-    task_id: "task_escaped_009",
-    prompt: "What is the capital of France?",
-    category: "factual_knowledge",
-    route: "local",
-    handler_name: "FactualHandler",
-    confidence: 1.0,
-    processing_time_ms: 0.5,
-    model_used: "None (Local Knowledge Dict)",
-    tokens_saved: 200,
-    answer: "Paris",
-    escalated: false
-  },
-  {
-    task_id: "task_escaped_010",
-    prompt: "Who won the Nobel Prize in Physics in 2025?",
-    category: "factual_knowledge",
-    route: "fireworks",
-    handler_name: "FactualHandler",
-    confidence: 0.0,
-    processing_time_ms: 520.0,
-    model_used: "accounts/fireworks/models/minimax-m3",
-    tokens_saved: 0,
-    answer: "The Nobel Prize in Physics in 2025 has not been announced or is not registered in the knowledge base.",
-    escalated: true,
-    escalation_reason: "not_handled"
-  }
-];
-
 export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'routing' | 'metrics'>('home');
-  const [tasks, setTasks] = useState<TaskResult[]>(INITIAL_TASKS);
+  const [tasks, setTasks] = useState<TaskResult[]>([]);
   const [lastResult, setLastResult] = useState<TaskResult | null>(null);
+  
+  // Responsive sidebar open state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Custom prompt input states
   const [customPrompt, setCustomPrompt] = useState('');
   const [customCategory, setCustomCategory] = useState('sentiment');
   const [isSimulating, setIsSimulating] = useState(false);
 
+  // Modern toast/banner notification state
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+
+  // Auto dismiss notifications
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
   // Live backend metrics state
   const [metrics, setMetrics] = useState({
-    total_tasks: INITIAL_TASKS.length,
-    local_tasks: INITIAL_TASKS.filter(t => t.route === 'local').length,
-    fireworks_tasks: INITIAL_TASKS.filter(t => t.route === 'fireworks').length,
-    token_savings: INITIAL_TASKS.reduce((sum, t) => sum + t.tokens_saved, 0),
-    average_confidence: 0.95,
-    average_latency: 1.8,
-    escalation_count: INITIAL_TASKS.filter(t => t.escalated).length
+    total_tasks: 0,
+    local_tasks: 0,
+    fireworks_tasks: 0,
+    token_savings: 0,
+    average_confidence: 0.0,
+    average_latency: 0.0,
+    escalation_count: 0
   });
 
   const fetchMetrics = () => {
@@ -253,11 +134,15 @@ export default function App() {
         setIsSimulating(false);
         setActiveTab('dashboard');
         fetchMetrics();
+        setNotification({ message: 'Task routed successfully!', type: 'success' });
       })
       .catch(error => {
         console.error('Error fetching routing decision:', error);
         setIsSimulating(false);
-        alert('Failed to connect to the backend router API. Please verify the backend is running at http://localhost:8000.');
+        setNotification({
+          message: 'Failed to connect to the backend router API. Please verify the backend is running at http://localhost:8000.',
+          type: 'error'
+        });
       });
   };
 
@@ -283,11 +168,57 @@ export default function App() {
   const lowConfidenceCount = tasks.filter(t => t.escalation_reason === 'low_confidence').length;
   const parseFailureCount = tasks.filter(t => t.escalation_reason === 'parse_failure').length;
 
+  // Confidence Histogram dynamic bin values
+  const bin1 = tasks.filter(t => t.confidence <= 0.2 && t.route === 'local').length;
+  const bin2 = tasks.filter(t => t.confidence > 0.2 && t.confidence <= 0.4 && t.route === 'local').length;
+  const bin3 = tasks.filter(t => t.confidence > 0.4 && t.confidence <= 0.6 && t.route === 'local').length;
+  const bin4 = tasks.filter(t => t.confidence > 0.6 && t.confidence <= 0.8 && t.route === 'local').length;
+  const bin5 = tasks.filter(t => t.confidence > 0.8 && t.route === 'local').length;
+  const maxBin = Math.max(bin1, bin2, bin3, bin4, bin5, 1);
+
+  // Category dynamic savings
+  const mathSavings = tasks.filter(t => t.category === 'math_reasoning' && t.route === 'local').reduce((sum, t) => sum + t.tokens_saved, 0);
+  const factualSavings = tasks.filter(t => t.category === 'factual_knowledge' && t.route === 'local').reduce((sum, t) => sum + t.tokens_saved, 0);
+  const nlpSavings = tasks.filter(t => ['sentiment', 'ner', 'summarization'].includes(t.category) && t.route === 'local').reduce((sum, t) => sum + t.tokens_saved, 0);
+  const maxSavings = Math.max(mathSavings, factualSavings, nlpSavings, 1);
+
   return (
     <div className="flex h-screen bg-[#070b13] text-gray-100 overflow-hidden font-sans">
       
+      {/* Toast Notification Banner */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-0 ${
+          notification.type === 'error' 
+            ? 'bg-red-950/80 border-red-800 text-red-200' 
+            : notification.type === 'success' 
+            ? 'bg-emerald-950/80 border-emerald-800 text-emerald-200' 
+            : 'bg-amber-950/80 border-amber-800 text-amber-200'
+        }`}>
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          <span className="text-xs font-semibold">{notification.message}</span>
+        </div>
+      )}
+
+      {/* Loading Overlay Spinner */}
+      {isSimulating && (
+        <div className="fixed inset-0 bg-[#070b13]/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 animate-fadeIn">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-sm font-semibold text-blue-400 animate-pulse">Routing Task through Horcrux Pipeline...</div>
+        </div>
+      )}
+
+      {/* Sidebar Backdrop Overlay on Mobile */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)} 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden transition-opacity duration-300"
+        />
+      )}
+      
       {/* SIDEBAR NAVIGATION */}
-      <aside className="w-64 bg-[#0d1222] border-r border-[#1e273d] flex flex-col justify-between shrink-0">
+      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#0d1222] border-r border-[#1e273d] flex flex-col justify-between shrink-0 transition-transform duration-300 md:relative md:translate-x-0 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
         <div>
           <div className="p-6 border-b border-[#1e273d] flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -301,7 +232,7 @@ export default function App() {
           
           <nav className="p-4 space-y-1">
             <button 
-              onClick={() => setActiveTab('home')}
+              onClick={() => { setActiveTab('home'); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                 activeTab === 'home' 
                   ? 'bg-blue-600/10 text-blue-400 font-medium border border-blue-500/20' 
@@ -312,7 +243,7 @@ export default function App() {
               <span>Overview</span>
             </button>
             <button 
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                 activeTab === 'dashboard' 
                   ? 'bg-blue-600/10 text-blue-400 font-medium border border-blue-500/20' 
@@ -323,7 +254,7 @@ export default function App() {
               <span>Dashboard</span>
             </button>
             <button 
-              onClick={() => setActiveTab('routing')}
+              onClick={() => { setActiveTab('routing'); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                 activeTab === 'routing' 
                   ? 'bg-blue-600/10 text-blue-400 font-medium border border-blue-500/20' 
@@ -334,7 +265,7 @@ export default function App() {
               <span>Routing Visualizer</span>
             </button>
             <button 
-              onClick={() => setActiveTab('metrics')}
+              onClick={() => { setActiveTab('metrics'); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                 activeTab === 'metrics' 
                   ? 'bg-blue-600/10 text-blue-400 font-medium border border-blue-500/20' 
@@ -361,11 +292,21 @@ export default function App() {
 
       {/* MAIN CONTENT WORKSPACE */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className="h-16 border-b border-[#1e273d] bg-[#0d1222]/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-30">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold tracking-wider text-blue-400 uppercase">{activeTab}</span>
-            <span className="text-gray-600">/</span>
-            <span className="text-xs text-gray-400">Environment: Sandbox</span>
+        <header className="h-16 border-b border-[#1e273d] bg-[#0d1222]/80 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-30">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="p-1.5 rounded-lg border border-[#1e273d] text-gray-400 hover:text-white md:hidden focus:outline-none transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold tracking-wider text-blue-400 uppercase">{activeTab}</span>
+              <span className="text-gray-600">/</span>
+              <span className="text-xs text-gray-400">Environment: Sandbox</span>
+            </div>
           </div>
           <div className="text-xs bg-blue-600/10 text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-full font-medium tracking-wide">
             Threshold Cap: 0.80
@@ -534,70 +475,88 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#1f2a45]">
-                      {tasks.map((task) => (
-                        <tr key={task.task_id} className="hover:bg-[#182035]/50 transition-colors">
-                          <td className="p-4 space-y-1 vertical-top">
-                            <div className="font-semibold text-white text-xs">{task.task_id}</div>
-                            <span className="text-[10px] bg-blue-950 text-blue-400 border border-blue-800/30 px-2 py-0.5 rounded-full font-medium">
-                              {task.category}
-                            </span>
-                          </td>
-                          <td className="p-4 text-xs text-gray-300 max-w-xs truncate" title={task.prompt}>
-                            {task.prompt}
-                          </td>
-                          <td className="p-4 vertical-top">
-                            {task.route === 'local' ? (
-                              <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800/30 px-2 py-1 rounded-full font-medium">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Local</span>
-                              </span>
-                            ) : task.escalated ? (
-                              <div className="space-y-1">
-                                <span className="inline-flex items-center gap-1 text-[10px] bg-amber-950 text-amber-400 border border-amber-800/30 px-2 py-1 rounded-full font-medium">
-                                  <AlertTriangle className="w-3.5 h-3.5" />
-                                  <span>Escalated</span>
-                                </span>
-                                <div className="text-[9px] text-gray-500 block truncate max-w-[100px]" title={task.model_used}>
-                                  {task.model_used.split('/').pop()}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="space-y-1">
-                                <span className="inline-flex items-center gap-1 text-[10px] bg-indigo-950 text-indigo-400 border border-indigo-800/30 px-2 py-1 rounded-full font-medium">
-                                  <Database className="w-3.5 h-3.5" />
-                                  <span>Fireworks</span>
-                                </span>
-                                <div className="text-[9px] text-gray-500 block truncate max-w-[100px]" title={task.model_used}>
-                                  {task.model_used.split('/').pop()}
-                                </div>
-                              </div>
-                            )}
-                          </td>
-                          <td className="p-4 text-xs text-gray-400 font-mono">
-                            {task.handler_name}
-                          </td>
-                          <td className="p-4 text-center">
-                            {task.route === 'fireworks' && !task.escalated ? (
-                              <span className="text-xs text-gray-600">-</span>
-                            ) : (
-                              <span className={`text-xs font-semibold ${
-                                task.confidence >= 0.80 ? 'text-emerald-400' : 'text-amber-400'
-                              }`}>
-                                {task.confidence.toFixed(2)}
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-4 text-center text-xs text-gray-400">
-                            {task.processing_time_ms} ms
-                          </td>
-                          <td className="p-4 text-center font-semibold text-xs text-blue-400">
-                            {task.tokens_saved > 0 ? `+${task.tokens_saved}` : '-'}
-                          </td>
-                          <td className="p-4 text-xs text-gray-300 max-w-xs font-mono truncate" title={task.answer}>
-                            {task.answer}
+                      {tasks.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-12 text-center text-gray-500">
+                            <div className="flex flex-col items-center justify-center gap-3 py-6">
+                              <Database className="w-10 h-10 text-gray-600 animate-pulse" />
+                              <p className="text-sm font-semibold text-gray-400">No execution logs captured yet.</p>
+                              <p className="text-xs text-gray-500 max-w-sm">Run a custom query in the router simulator to populate live data tables and trace decision pathways.</p>
+                              <button 
+                                onClick={() => setActiveTab('home')} 
+                                className="mt-2 text-xs bg-blue-600/20 text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl hover:bg-blue-600/30 transition-all font-medium"
+                              >
+                                Go to Simulator
+                              </button>
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        tasks.map((task) => (
+                          <tr key={task.task_id} className="hover:bg-[#182035]/50 transition-colors">
+                            <td className="p-4 space-y-1 vertical-top">
+                              <div className="font-semibold text-white text-xs">{task.task_id}</div>
+                              <span className="text-[10px] bg-blue-950 text-blue-400 border border-blue-800/30 px-2 py-0.5 rounded-full font-medium">
+                                {task.category}
+                              </span>
+                            </td>
+                            <td className="p-4 text-xs text-gray-300 max-w-xs truncate" title={task.prompt}>
+                              {task.prompt}
+                            </td>
+                            <td className="p-4 vertical-top">
+                              {task.route === 'local' ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800/30 px-2 py-1 rounded-full font-medium">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Local</span>
+                                </span>
+                              ) : task.escalated ? (
+                                <div className="space-y-1">
+                                  <span className="inline-flex items-center gap-1 text-[10px] bg-amber-950 text-amber-400 border border-amber-800/30 px-2 py-1 rounded-full font-medium">
+                                    <AlertTriangle className="w-3.5 h-3.5" />
+                                    <span>Escalated</span>
+                                  </span>
+                                  <div className="text-[9px] text-gray-500 block truncate max-w-[100px]" title={task.model_used}>
+                                    {task.model_used.split('/').pop()}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-1">
+                                  <span className="inline-flex items-center gap-1 text-[10px] bg-indigo-950 text-indigo-400 border border-indigo-800/30 px-2 py-1 rounded-full font-medium">
+                                    <Database className="w-3.5 h-3.5" />
+                                    <span>Fireworks</span>
+                                  </span>
+                                  <div className="text-[9px] text-gray-500 block truncate max-w-[100px]" title={task.model_used}>
+                                    {task.model_used.split('/').pop()}
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-4 text-xs text-gray-400 font-mono">
+                              {task.handler_name}
+                            </td>
+                            <td className="p-4 text-center">
+                              {task.route === 'fireworks' && !task.escalated ? (
+                                <span className="text-xs text-gray-600">-</span>
+                              ) : (
+                                <span className={`text-xs font-semibold ${
+                                  task.confidence >= 0.80 ? 'text-emerald-400' : 'text-amber-400'
+                                }`}>
+                                  {task.confidence.toFixed(2)}
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4 text-center text-xs text-gray-400">
+                              {task.processing_time_ms} ms
+                            </td>
+                            <td className="p-4 text-center font-semibold text-xs text-blue-400">
+                              {task.tokens_saved > 0 ? `+${task.tokens_saved}` : '-'}
+                            </td>
+                            <td className="p-4 text-xs text-gray-300 max-w-xs font-mono truncate" title={task.answer}>
+                              {task.answer}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -626,83 +585,83 @@ export default function App() {
 
                   <div className="flex flex-col md:flex-row items-center justify-center gap-4 py-8">
                     {/* Node 1: Prompt */}
-                    <div className="bg-slate-900 border border-blue-500/20 px-4 py-2.5 rounded-xl text-center w-36 shadow-md">
+                    <div className="bg-slate-900 border border-blue-500/40 px-4 py-2.5 rounded-xl text-center w-36 shadow-md pulse-glow-blue transition-all">
                       <span className="text-[9px] text-blue-400 font-bold uppercase tracking-wider block">Prompt</span>
                       <div className="text-xs font-semibold text-gray-200 truncate mt-0.5" title={lastResult.prompt}>{lastResult.prompt}</div>
                     </div>
 
-                    <ArrowRight className="w-5 h-5 text-blue-500 rotate-90 md:rotate-0" />
+                    <ArrowRight className="w-5 h-5 text-blue-500 rotate-90 md:rotate-0 animate-pulse" />
 
                     {/* Node 2: Classifier */}
-                    <div className="bg-[#1e2336] border border-blue-500/40 px-4 py-2.5 rounded-xl text-center w-36 shadow-md">
+                    <div className="bg-[#1e2336] border border-blue-500/60 px-4 py-2.5 rounded-xl text-center w-36 shadow-md pulse-glow-blue transition-all">
                       <span className="text-[9px] text-blue-400 font-bold uppercase tracking-wider block">Classifier</span>
                       <div className="text-xs font-semibold text-white mt-0.5 capitalize">{lastResult.category}</div>
                     </div>
 
-                    <ArrowRight className="w-5 h-5 text-blue-500 rotate-90 md:rotate-0" />
+                    <ArrowRight className="w-5 h-5 text-blue-500 rotate-90 md:rotate-0 animate-pulse" />
 
                     {/* Conditional steps */}
                     {lastResult.route === 'local' ? (
                       <>
-                        <div className="bg-emerald-950/20 border border-emerald-900/30 px-4 py-2.5 rounded-xl text-center w-36 shadow-md">
+                        <div className="bg-emerald-950/20 border border-emerald-500/50 px-4 py-2.5 rounded-xl text-center w-36 shadow-md pulse-glow-emerald transition-all">
                           <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">Local Handler</span>
                           <div className="text-xs font-semibold text-gray-200 mt-0.5 font-mono text-[10px]">{lastResult.handler_name}</div>
                         </div>
 
-                        <ArrowRight className="w-5 h-5 text-emerald-500 rotate-90 md:rotate-0" />
+                        <ArrowRight className="w-5 h-5 text-emerald-500 rotate-90 md:rotate-0 animate-pulse" />
 
-                        <div className="bg-emerald-950/30 border border-emerald-500/30 px-4 py-2.5 rounded-xl text-center w-36 shadow-md">
+                        <div className="bg-emerald-950/30 border border-emerald-500/60 px-4 py-2.5 rounded-xl text-center w-36 shadow-md pulse-glow-emerald transition-all">
                           <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">Confidence</span>
                           <div className="text-xs font-bold text-emerald-400 mt-0.5">C = {lastResult.confidence.toFixed(2)}</div>
                         </div>
 
-                        <ArrowRight className="w-5 h-5 text-emerald-500 rotate-90 md:rotate-0" />
+                        <ArrowRight className="w-5 h-5 text-emerald-500 rotate-90 md:rotate-0 animate-pulse" />
 
-                        <div className="bg-emerald-500 text-slate-950 px-4 py-2.5 rounded-xl text-center w-36 font-bold text-xs shadow-lg shadow-emerald-500/20">
+                        <div className="bg-emerald-500 text-slate-950 px-4 py-2.5 rounded-xl text-center w-36 font-bold text-xs shadow-lg shadow-emerald-500/30 pulse-glow-emerald transition-all">
                           LOCAL (Saved {lastResult.tokens_saved} Tokens)
                         </div>
                       </>
                     ) : lastResult.escalated ? (
                       <>
-                        <div className="bg-amber-950/20 border border-amber-900/30 px-4 py-2.5 rounded-xl text-center w-36 shadow-md">
+                        <div className="bg-amber-950/20 border border-amber-500/40 px-4 py-2.5 rounded-xl text-center w-36 shadow-md pulse-glow-amber transition-all">
                           <span className="text-[9px] text-amber-400 font-bold uppercase tracking-wider block">Local Handler</span>
                           <div className="text-xs font-semibold text-gray-200 mt-0.5 font-mono text-[10px]">{lastResult.handler_name}</div>
                         </div>
 
-                        <ArrowRight className="w-5 h-5 text-amber-500 rotate-90 md:rotate-0" />
+                        <ArrowRight className="w-5 h-5 text-amber-500 rotate-90 md:rotate-0 animate-pulse" />
 
-                        <div className="bg-amber-950/30 border border-amber-500/30 px-4 py-2.5 rounded-xl text-center w-36 shadow-md">
+                        <div className="bg-amber-950/30 border border-amber-500/50 px-4 py-2.5 rounded-xl text-center w-36 shadow-md pulse-glow-amber transition-all">
                           <span className="text-[9px] text-amber-400 font-bold uppercase tracking-wider block">Escalated</span>
                           <div className="text-xs font-bold text-amber-400 mt-0.5">{lastResult.escalation_reason}</div>
                         </div>
 
-                        <ArrowRight className="w-5 h-5 text-amber-500 rotate-90 md:rotate-0" />
+                        <ArrowRight className="w-5 h-5 text-amber-500 rotate-90 md:rotate-0 animate-pulse" />
 
-                        <div className="bg-indigo-950 border border-indigo-500/30 px-4 py-2.5 rounded-xl text-center w-36 shadow-md">
+                        <div className="bg-indigo-950 border border-indigo-500/50 px-4 py-2.5 rounded-xl text-center w-36 shadow-md pulse-glow-blue transition-all">
                           <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider block">Fireworks Model</span>
                           <div className="text-xs font-semibold text-white mt-0.5 block truncate text-[10px]">{lastResult.model_used.split('/').pop()}</div>
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="bg-indigo-950 border border-indigo-500/30 px-4 py-2.5 rounded-xl text-center w-36 shadow-md">
+                        <div className="bg-indigo-950 border border-indigo-500/40 px-4 py-2.5 rounded-xl text-center w-36 shadow-md pulse-glow-blue transition-all">
                           <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider block">Route</span>
                           <div className="text-xs font-semibold text-indigo-300 mt-0.5">Direct API</div>
                         </div>
 
-                        <ArrowRight className="w-5 h-5 text-indigo-500 rotate-90 md:rotate-0" />
+                        <ArrowRight className="w-5 h-5 text-indigo-500 rotate-90 md:rotate-0 animate-pulse" />
 
-                        <div className="bg-indigo-950 border border-indigo-500/30 px-4 py-2.5 rounded-xl text-center w-36 shadow-md">
+                        <div className="bg-indigo-950 border border-indigo-500/50 px-4 py-2.5 rounded-xl text-center w-36 shadow-md pulse-glow-blue transition-all">
                           <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider block">Fireworks Model</span>
                           <div className="text-xs font-semibold text-white mt-0.5 block truncate text-[10px]">{lastResult.model_used.split('/').pop()}</div>
                         </div>
                       </>
                     )}
 
-                    <ArrowRight className="w-5 h-5 text-blue-500 rotate-90 md:rotate-0" />
+                    <ArrowRight className="w-5 h-5 text-blue-500 rotate-90 md:rotate-0 animate-pulse" />
 
                     {/* Node 5: Answer */}
-                    <div className="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white px-4 py-2.5 rounded-xl text-center w-36 shadow-lg shadow-blue-500/20">
+                    <div className="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white px-4 py-2.5 rounded-xl text-center w-36 shadow-lg shadow-blue-500/30 pulse-glow-blue transition-all">
                       <span className="text-[9px] text-blue-200 font-bold uppercase tracking-wider block">Answer</span>
                       <div className="text-xs font-bold truncate mt-0.5" title={lastResult.answer}>{lastResult.answer}</div>
                     </div>
@@ -866,32 +825,32 @@ export default function App() {
                     
                     {/* Bins */}
                     <div className="flex-1 flex flex-col items-center gap-2">
-                      <div className="text-xs text-gray-400">{tasks.filter(t => t.confidence <= 0.2 && t.route === 'local').length}</div>
-                      <div className="w-full bg-blue-600/20 border border-blue-500/30 rounded-t-lg transition-all" style={{ height: '10%' }}></div>
+                      <div className="text-xs text-gray-400">{bin1}</div>
+                      <div className="w-full bg-blue-600/20 border border-blue-500/30 rounded-t-lg transition-all" style={{ height: `${(bin1 / maxBin) * 100}%` }}></div>
                       <span className="text-[9px] text-gray-500">0.0-0.2</span>
                     </div>
 
                     <div className="flex-1 flex flex-col items-center gap-2">
-                      <div className="text-xs text-gray-400">{tasks.filter(t => t.confidence > 0.2 && t.confidence <= 0.4 && t.route === 'local').length}</div>
-                      <div className="w-full bg-blue-600/20 border border-blue-500/30 rounded-t-lg transition-all" style={{ height: '10%' }}></div>
+                      <div className="text-xs text-gray-400">{bin2}</div>
+                      <div className="w-full bg-blue-600/20 border border-blue-500/30 rounded-t-lg transition-all" style={{ height: `${(bin2 / maxBin) * 100}%` }}></div>
                       <span className="text-[9px] text-gray-500">0.2-0.4</span>
                     </div>
 
                     <div className="flex-1 flex flex-col items-center gap-2">
-                      <div className="text-xs text-gray-400">{tasks.filter(t => t.confidence > 0.4 && t.confidence <= 0.6 && t.route === 'local').length}</div>
-                      <div className="w-full bg-blue-600/40 border border-blue-500/50 rounded-t-lg transition-all" style={{ height: '30%' }}></div>
+                      <div className="text-xs text-gray-400">{bin3}</div>
+                      <div className="w-full bg-blue-600/40 border border-blue-500/50 rounded-t-lg transition-all" style={{ height: `${(bin3 / maxBin) * 100}%` }}></div>
                       <span className="text-[9px] text-gray-500">0.4-0.6</span>
                     </div>
 
                     <div className="flex-1 flex flex-col items-center gap-2">
-                      <div className="text-xs text-gray-400">{tasks.filter(t => t.confidence > 0.6 && t.confidence <= 0.8 && t.route === 'local').length}</div>
-                      <div className="w-full bg-blue-600/60 border border-blue-500/70 rounded-t-lg transition-all" style={{ height: '20%' }}></div>
+                      <div className="text-xs text-gray-400">{bin4}</div>
+                      <div className="w-full bg-blue-600/60 border border-blue-500/70 rounded-t-lg transition-all" style={{ height: `${(bin4 / maxBin) * 100}%` }}></div>
                       <span className="text-[9px] text-gray-500">0.6-0.8</span>
                     </div>
 
                     <div className="flex-1 flex flex-col items-center gap-2">
-                      <div className="text-xs text-gray-400">{tasks.filter(t => t.confidence > 0.8 && t.route === 'local').length}</div>
-                      <div className="w-full bg-blue-500 border border-blue-400 rounded-t-lg transition-all" style={{ height: '80%' }}></div>
+                      <div className="text-xs text-gray-400">{bin5}</div>
+                      <div className="w-full bg-blue-500 border border-blue-400 rounded-t-lg transition-all" style={{ height: `${(bin5 / maxBin) * 100}%` }}></div>
                       <span className="text-[9px] text-gray-500">0.8-1.0</span>
                     </div>
 
@@ -906,30 +865,30 @@ export default function App() {
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Math Reasoning</span>
-                        <span className="text-blue-400 font-semibold">{tasks.filter(t => t.category === 'math_reasoning' && t.route === 'local').reduce((sum, t) => sum + t.tokens_saved, 0)} tokens</span>
+                        <span className="text-blue-400 font-semibold">{mathSavings} tokens</span>
                       </div>
                       <div className="w-full bg-[#0b0f19] h-2 rounded-full overflow-hidden">
-                        <div className="bg-blue-500 h-full" style={{ width: '40%' }}></div>
+                        <div className="bg-blue-500 h-full transition-all" style={{ width: `${(mathSavings / maxSavings) * 100}%` }}></div>
                       </div>
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Factual Knowledge</span>
-                        <span className="text-blue-400 font-semibold">{tasks.filter(t => t.category === 'factual_knowledge' && t.route === 'local').reduce((sum, t) => sum + t.tokens_saved, 0)} tokens</span>
+                        <span className="text-blue-400 font-semibold">{factualSavings} tokens</span>
                       </div>
                       <div className="w-full bg-[#0b0f19] h-2 rounded-full overflow-hidden">
-                        <div className="bg-blue-500 h-full" style={{ width: '35%' }}></div>
+                        <div className="bg-blue-500 h-full transition-all" style={{ width: `${(factualSavings / maxSavings) * 100}%` }}></div>
                       </div>
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">NLP (Sentiment/NER/Summary)</span>
-                        <span className="text-blue-400 font-semibold">{tasks.filter(t => ['sentiment', 'ner', 'summarization'].includes(t.category) && t.route === 'local').reduce((sum, t) => sum + t.tokens_saved, 0)} tokens</span>
+                        <span className="text-blue-400 font-semibold">{nlpSavings} tokens</span>
                       </div>
                       <div className="w-full bg-[#0b0f19] h-2 rounded-full overflow-hidden">
-                        <div className="bg-blue-500 h-full" style={{ width: '25%' }}></div>
+                        <div className="bg-blue-500 h-full transition-all" style={{ width: `${(nlpSavings / maxSavings) * 100}%` }}></div>
                       </div>
                     </div>
 
