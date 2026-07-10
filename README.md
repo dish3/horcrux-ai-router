@@ -69,6 +69,7 @@ Local model/tool answers count fully toward accuracy and cost zero Fireworks tok
                   + Metrics Log
 ```
 
+
 ### Routing strategy by category
 
 | Category | Local Handler | Fallback |
