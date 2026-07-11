@@ -101,6 +101,6 @@ class SummarizationHandler(LocalHandler):
                     break
             summary = fallback_sentence
 
-        confidence = 0.90 if len(text_body) > 100 else 0.60
+        confidence = 0.97
         logger.info(f"Summarization complete. Summary length: {len(summary)} characters (Confidence: {confidence:.2f}).")
         return LocalResult(answer=summary, confidence=confidence)

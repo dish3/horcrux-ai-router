@@ -99,6 +99,8 @@ class MathHandler(LocalHandler):
             expr = expr.replace("one quarter", "0.25")
             expr = expr.replace("three quarters", "0.75")
             expr = expr.replace("three fourths", "0.75")
+            expr = expr.replace("×", "*")
+            expr = re.sub(r'(\d+)\s*x\s*(\d+)', r'\1 * \2', expr)
 
             # Extract any valid arithmetic substring (contains digits, operators +, -, *, /, %, parentheses, space, dot)
             # E.g. "calculate (10 + 20) * 2 / 3" -> "(10 + 20) * 2 / 3"

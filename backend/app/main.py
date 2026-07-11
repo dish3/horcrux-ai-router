@@ -28,14 +28,8 @@ app = FastAPI(
 # Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
-    ],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|172\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+)(:\d+)?",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -52,3 +46,17 @@ async def read_root() -> dict[str, str]:
         "project": "Horcrux",
         "status": "running"
       }
+
+@app.get("/cors-test")
+async def cors_test() -> dict[str, str]:
+    return {
+        "status": "ok",
+        "version": "cors-test-v1",
+        "allowed_origins": str([
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://horcrux-ai-router-7brw.vercel.app"
+        ])
+    }

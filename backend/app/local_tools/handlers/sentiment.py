@@ -14,12 +14,12 @@ class SentimentHandler(LocalHandler):
 
     def __init__(self) -> None:
         self.positive_words: Set[str] = {
-            "great", "love", "excellent", "fantastic", "amazing", "wonderful", 
-            "good", "beautiful", "happy", "awesome", "perfect", "enjoy", "pleasant", "delight"
+            "great", "love", "loved", "loves", "loving", "excellent", "fantastic", "amazing", "wonderful", 
+            "good", "beautiful", "happy", "awesome", "perfect", "enjoy", "enjoyed", "pleasant", "delight", "delighted", "delightful", "like", "liked", "likes"
         }
         self.negative_words: Set[str] = {
-            "bad", "terrible", "hate", "awful", "horrible", "poor", "worse", 
-            "worst", "dislike", "angry", "sad", "failure", "bug", "broken", "annoy"
+            "bad", "terrible", "hate", "hated", "hates", "hating", "awful", "horrible", "poor", "worse", 
+            "worst", "dislike", "disliked", "dislikes", "angry", "sad", "failure", "bug", "broken", "annoy", "annoyed"
         }
 
     def can_handle(self, task: Task, category: str) -> bool:

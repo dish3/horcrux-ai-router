@@ -89,9 +89,11 @@ class LocalDispatcher:
         from backend.app.local_tools.handlers.summarization import SummarizationHandler
         from backend.app.local_tools.handlers.math import MathHandler
         from backend.app.local_tools.handlers.factual import FactualHandler
+        from backend.app.local_tools.handlers.greeting import GreetingHandler
 
         self.register(SentimentHandler())
         self.register(NERHandler())
         self.register(SummarizationHandler())
         self.register(MathHandler())
         self.register(FactualHandler())
+        self.register(GreetingHandler())

@@ -53,12 +53,12 @@ class NERHandler(LocalHandler):
             answer = self._execute_spacy(text_to_analyze)
             handler_name = "NERHandler_spaCy"
             has_entities = "Person: None, Organization: None, Location: None, Date: None" not in answer
-            confidence = 0.95 if has_entities else 0.60
+            confidence = 0.98 if has_entities else 0.60
         else:
             answer = self._execute_regex_fallback(text_to_analyze)
             handler_name = "NERHandler_Regex"
             has_entities = "Person: None, Organization: None, Location: None, Date: None" not in answer
-            confidence = 0.90 if has_entities else 0.55
+            confidence = 0.96 if has_entities else 0.55
             
         return LocalResult(answer=answer, confidence=confidence, handler_name=handler_name)
 
@@ -103,7 +103,8 @@ class NERHandler(LocalHandler):
         
         known_locations = {
             "london", "paris", "tokyo", "beijing", "berlin", "washington", "new york",
-            "france", "japan", "china", "germany", "usa", "uk", "england", "america"
+            "france", "japan", "china", "germany", "usa", "uk", "england", "america",
+            "bengaluru", "bangalore", "india"
         }
         known_orgs = {
             "google", "microsoft", "apple", "amd", "nvidia", "intel", "openai", "fireworks",

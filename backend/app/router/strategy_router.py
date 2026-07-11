@@ -23,7 +23,7 @@ class CategoryMappingStrategy(BaseRoutingStrategy):
         Returns:
             The selected target route name ('local' or 'fireworks').
         """
-        local_categories = {"sentiment", "ner", "summarization", "math_reasoning", "factual_knowledge"}
+        local_categories = {"sentiment", "ner", "summarization", "math_reasoning", "factual_knowledge", "greeting"}
         fireworks_categories = {
             "logic",
             "code_debugging",

@@ -67,14 +67,21 @@ def route_prompt(req: RouteRequest):
     task = Task(task_id=task_id, prompt=req.prompt)
     
     # 2. Classifier
-    category = req.category if req.category else _classifier.classify(task)
+    category_input = req.category if req.category else _classifier.classify(task)
+    category_lower = category_input.lower().strip()
+    if category_lower in ("math", "math_reasoning"):
+        internal_category = "math_reasoning"
+    elif category_lower in ("summary", "summarization"):
+        internal_category = "summarization"
+    else:
+        internal_category = category_lower
     
     # 3. Difficulty Estimator
     difficulty = _difficulty_estimator.estimate_difficulty(task)
     
     # 4. Strategy Router
     strategy = get_strategy("category_mapping")
-    route_decision = strategy.route(task, category, difficulty)
+    route_decision = strategy.route(task, internal_category, difficulty)
     
     # Outputs variables
     handler_name = "None"
@@ -88,7 +95,7 @@ def route_prompt(req: RouteRequest):
     
     if route_decision == "fireworks":
         # Direct Fireworks route
-        api_result = call_fireworks(task.prompt, category=category)
+        api_result = call_fireworks(task.prompt, category=internal_category)
         answer = api_result["answer"]
         tokens_used = api_result["tokens_used"]
         fireworks_model = api_result["model"]
@@ -97,7 +104,7 @@ def route_prompt(req: RouteRequest):
         tracker.record_fireworks(tokens_used)
     else:
         # Local dispatcher execution
-        local_res = _local_dispatcher.execute(task, category)
+        local_res = _local_dispatcher.execute(task, internal_category)
         
         # Check escalation threshold
         escalate, reason = should_escalate(local_res, DEFAULT_CONFIDENCE_THRESHOLD)
@@ -106,11 +113,11 @@ def route_prompt(req: RouteRequest):
         
         # Define estimated token savings
         saved_est = 150
-        if category == "math_reasoning":
+        if internal_category == "math_reasoning":
             saved_est = 250
-        elif category == "factual_knowledge":
+        elif internal_category == "factual_knowledge":
             saved_est = 200
-
+ 
         if not escalate:
             answer = local_res.answer
             tokens_saved = saved_est
@@ -122,7 +129,7 @@ def route_prompt(req: RouteRequest):
             escalation_reason = reason
             
             # Escalate execution to Fireworks API
-            api_result = call_fireworks(task.prompt, category=category)
+            api_result = call_fireworks(task.prompt, category=internal_category)
             answer = api_result["answer"]
             tokens_used = api_result["tokens_used"]
             fireworks_model = api_result["model"]
@@ -133,10 +140,13 @@ def route_prompt(req: RouteRequest):
     end_time = time.perf_counter()
     latency_ms = (end_time - start_time) * 1000.0
     
+    # Return friendly name
+    display_category = "math" if internal_category == "math_reasoning" else "summary" if internal_category == "summarization" else internal_category
+    
     return RouteResponse(
         task_id=task_id,
         prompt=req.prompt,
-        category=category,
+        category=display_category,
         route="local" if (route_decision == "local" and not escalated) else "fireworks",
         handler=handler_name,
         confidence=confidence,
