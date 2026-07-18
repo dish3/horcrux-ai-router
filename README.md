@@ -1,6 +1,7 @@
-# Horcrux — Cost-Aware Hybrid AI Router https://horcrux-ai-router-7brw.vercel.app/
+# Horcrux — Cost-Aware Hybrid AI Router 
 
 **Think before you spend tokens.**
+https://horcrux-ai-router-7brw.vercel.app/
 
 Horcrux is an intelligent routing agent built for the **AMD Developer Hackathon: ACT II (Track 1 — General-Purpose AI Agent)**. Instead of sending every prompt to a hosted LLM, Horcrux classifies each request, decides whether it can be answered locally at zero cloud cost, and only escalates to Fireworks AI when local execution isn't confident enough to trust.
 
