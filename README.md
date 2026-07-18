@@ -1,4 +1,4 @@
-# Horcrux — Cost-Aware Hybrid AI Router
+# Horcrux — Cost-Aware Hybrid AI Router https://horcrux-ai-router-7brw.vercel.app/
 
 **Think before you spend tokens.**
 
